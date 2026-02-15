@@ -422,6 +422,10 @@ input:focus, select:focus {
   letter-spacing: 0.06em;
   white-space: nowrap;
   line-height: 1.6;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
 }
 
 .model-badge--gpt-4o,

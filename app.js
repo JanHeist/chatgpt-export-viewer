@@ -618,7 +618,9 @@
     body.className = 'message__body';
 
     var content = renderContent(msg);
-    if (content) body.appendChild(content);
+    // Skip messages with no renderable content (e.g. empty assistant messages before tool use)
+    if (!content) return null;
+    body.appendChild(content);
     div.appendChild(body);
 
     // Timestamp
@@ -657,6 +659,9 @@
     var parts = msg.content.parts || [];
     var text = parts.filter(function (p) { return typeof p === 'string'; }).join('\n');
     if (!text.trim()) return null;
+
+    // Strip ChatGPT citation markers like [cite:turn0search0]
+    text = text.replace(/\[cite:[^\]]*\]/g, '');
 
     var div = document.createElement('div');
     div.innerHTML = marked.parse(text);
@@ -727,9 +732,10 @@
     for (var i = 0; i < parts.length; i++) {
       var part = parts[i];
       if (typeof part === 'string') {
-        if (part.trim()) {
+        var cleaned = part.replace(/\[cite:[^\]]*\]/g, '');
+        if (cleaned.trim()) {
           var textDiv = document.createElement('div');
-          textDiv.innerHTML = marked.parse(part);
+          textDiv.innerHTML = marked.parse(cleaned);
           container.appendChild(textDiv);
         }
       } else if (part && typeof part === 'object' && part.content_type === 'image_asset_pointer') {
@@ -787,25 +793,25 @@
   }
 
   function resolveImageSrc(fileId, img) {
+    if (State.fileCache[fileId] === false) {
+      // Known missing — show placeholder immediately
+      showImagePlaceholder(img);
+      return;
+    }
     if (State.fileCache[fileId]) {
       img.src = State.fileCache[fileId];
       return;
     }
 
-    var exts = ['-sanitized.jpeg', '-sanitized.png', '-sanitized.jpg', '.png', '.jpeg', '.jpg'];
+    // Only try the most common export formats to minimize 404 noise
+    var exts = ['-sanitized.jpeg', '-sanitized.png', '-sanitized.jpg'];
     tryExtension(fileId, exts, 0, img);
   }
 
   function tryExtension(fileId, exts, idx, img) {
     if (idx >= exts.length) {
-      img.className = 'message-image--missing';
-      img.alt = 'Image not available';
-      img.style.cursor = 'default';
-      // Make it a div-like display
-      var placeholder = document.createElement('div');
-      placeholder.className = 'message-image--missing';
-      placeholder.textContent = 'Image not available';
-      if (img.parentNode) img.parentNode.replaceChild(placeholder, img);
+      State.fileCache[fileId] = false; // Cache negative result
+      showImagePlaceholder(img);
       return;
     }
 
@@ -820,6 +826,13 @@
     }).catch(function () {
       tryExtension(fileId, exts, idx + 1, img);
     });
+  }
+
+  function showImagePlaceholder(img) {
+    var placeholder = document.createElement('div');
+    placeholder.className = 'message-image--missing';
+    placeholder.textContent = 'Image not in export';
+    if (img.parentNode) img.parentNode.replaceChild(placeholder, img);
   }
 
   // ── Browsing Display ───────────────────────────────────────
@@ -1149,6 +1162,20 @@
 
   function formatModel(slug) {
     if (!slug) return 'Unknown';
+    // Truncate absurdly long internal model slugs
+    if (slug.length > 30) return slug.substring(0, 24) + '\u2026';
+    var map = {
+      'gpt-4o': 'GPT-4o', 'gpt-4o-mini': 'GPT-4o mini',
+      'gpt-4': 'GPT-4', 'gpt-4-5': 'GPT-4.5',
+      'gpt-5': 'GPT-5', 'gpt-5-1': 'GPT-5.1', 'gpt-5-2': 'GPT-5.2',
+      'gpt-5-thinking': 'GPT-5 Thinking', 'gpt-5-1-thinking': 'GPT-5.1 Thinking',
+      'gpt-5-2-thinking': 'GPT-5.2 Thinking',
+      'o1': 'o1', 'o1-preview': 'o1 Preview', 'o1-mini': 'o1 mini',
+      'o3': 'o3', 'o3-mini': 'o3 mini', 'o3-mini-high': 'o3 mini High',
+      'o4-mini': 'o4 mini', 'o4-mini-high': 'o4 mini High',
+      'auto': 'Auto',
+    };
+    if (map[slug]) return map[slug];
     return slug
       .replace(/-/g, ' ')
       .replace(/\b\w/g, function (c) { return c.toUpperCase(); })
