@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conversation Archive</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- highlight.js -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
+
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+
+  <!-- App styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ============ Loading Screen ============ -->
+  <div id="loading-screen" class="loading-screen">
+    <div class="loading-screen__title">Archive</div>
+    <div class="loading-screen__status" id="loading-status">Initializing&hellip;</div>
+    <div class="loading-screen__bar-track">
+      <div class="loading-screen__bar-fill" id="loading-bar"></div>
+    </div>
+    <div class="loading-screen__hint">Loading your conversation history</div>
+    <div class="loading-screen__error" id="loading-error">
+      <strong>Could not load conversations.</strong><br>
+      If you opened this file directly, you need a local server.<br>
+      <code>cd /path/to/export &amp;&amp; python3 -m http.server 8000</code>
+    </div>
+  </div>
+
+  <!-- ============ Main App ============ -->
+  <div id="app" class="app" style="display:none;">
+
+    <!-- Header -->
+    <header class="app__header">
+      <button class="menu-toggle" id="menu-toggle" aria-label="Toggle sidebar">&#9776;</button>
+      <h1 class="app__title">Archive</h1>
+      <div class="app__stats" id="header-stats"></div>
+    </header>
+
+    <!-- Mobile sidebar overlay -->
+    <div class="sidebar__overlay" id="sidebar-overlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar__search">
+        <input type="search" id="search-input" placeholder="Search conversations&hellip;  /" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="sidebar__filters">
+        <select id="model-filter" aria-label="Filter by model">
+          <option value="all">All models</option>
+        </select>
+        <input type="date" id="date-from" aria-label="From date" title="From date">
+        <input type="date" id="date-to" aria-label="To date" title="To date">
+        <button class="sort-btn" id="sort-btn" aria-label="Toggle sort order" title="Sort order">Newest</button>
+        <button class="filter-btn" id="star-filter" aria-label="Show starred only" title="Starred only">&#9733;</button>
+      </div>
+      <div class="sidebar__list" id="conv-list" role="listbox" aria-label="Conversations">
+        <div class="sidebar__list-spacer" id="conv-list-spacer"></div>
+        <div class="sidebar__list-content" id="conv-list-content"></div>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <main class="content" id="content">
+      <div class="content__empty" id="empty-state">
+        <div class="content__empty-title">Select a conversation</div>
+        <div class="content__empty-hint">
+          <kbd>/</kbd> search &nbsp; <kbd>&uarr;</kbd><kbd>&darr;</kbd> navigate &nbsp; <kbd>Esc</kbd> close
+        </div>
+      </div>
+      <div class="content__header" id="conv-header">
+        <h2 class="content__header-title" id="conv-title"></h2>
+        <div class="content__header-row">
+          <span class="model-badge" id="conv-model"></span>
+          <time class="content__header-date" id="conv-date"></time>
+          <span class="content__header-stats" id="conv-stats"></span>
+          <button class="icon-btn" id="star-btn" aria-label="Star conversation" title="Star">&#9734;</button>
+          <button class="icon-btn" id="export-btn" aria-label="Export as Markdown" title="Export Markdown">&#8615;</button>
+        </div>
+      </div>
+      <div class="content__messages" id="messages"></div>
+    </main>
+  </div>
+
+  <!-- Image Modal -->
+  <div id="image-modal" class="image-modal" style="display:none;" role="dialog" aria-label="Image viewer">
+    <img id="modal-image" src="" alt="Full size image">
+  </div>
+
+  <!-- CDN Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <!-- App -->
+  <script src="app.js"></script>
+</body>
+</html>
