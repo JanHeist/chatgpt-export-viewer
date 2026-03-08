@@ -6,6 +6,7 @@
 let conversations = null;
 let conversationMap = {};
 let index = [];
+let searchTextCache = {};
 
 self.onmessage = function (e) {
   switch (e.data.type) {
@@ -15,6 +16,9 @@ self.onmessage = function (e) {
     case 'getConversation':
       getConversation(e.data.id);
       break;
+    case 'searchConversations':
+      searchConversations(e.data.query, e.data.token);
+      break;
   }
 };
 
@@ -23,6 +27,7 @@ async function loadData() {
 
   try {
     conversations = await fetchConversationParts();
+    searchTextCache = {};
 
     post('loadProgress', { phase: 'Building index\u2026', pct: 80 });
 
@@ -172,6 +177,74 @@ function getConversation(id) {
     return;
   }
   post('conversationData', { id: id, conversation: conv });
+}
+
+function searchConversations(query, token) {
+  const q = (query || '').trim().toLowerCase();
+  if (!q || !Array.isArray(conversations)) {
+    post('searchResults', { token: token, query: query || '', ids: [] });
+    return;
+  }
+
+  const matches = [];
+  for (let i = 0; i < conversations.length; i++) {
+    const conv = conversations[i];
+    const id = conv.conversation_id || conv.id;
+    if (!id) continue;
+
+    let text = searchTextCache[id];
+    if (text === undefined) {
+      text = buildConversationSearchText(conv);
+      searchTextCache[id] = text;
+    }
+
+    if (text && text.indexOf(q) !== -1) {
+      matches.push(id);
+    }
+  }
+
+  post('searchResults', { token: token, query: query || '', ids: matches });
+}
+
+function buildConversationSearchText(conv) {
+  if (!conv) return '';
+  const parts = [];
+  if (conv.title) parts.push(conv.title);
+
+  const mapping = conv.mapping || {};
+  for (const nodeId in mapping) {
+    const node = mapping[nodeId];
+    const msg = node ? node.message : null;
+    if (!msg || !msg.author) continue;
+    if (msg.author.role === 'system') continue;
+    if (msg.metadata && msg.metadata.is_visually_hidden_from_conversation) continue;
+
+    const text = extractMessageText(msg);
+    if (text) parts.push(text);
+  }
+
+  return parts.join('\n').toLowerCase();
+}
+
+function extractMessageText(msg) {
+  const content = msg.content || {};
+  const chunks = [];
+
+  if (Array.isArray(content.parts)) {
+    for (let i = 0; i < content.parts.length; i++) {
+      const part = content.parts[i];
+      if (typeof part === 'string' && part.trim()) chunks.push(part);
+    }
+  }
+
+  if (typeof content.text === 'string' && content.text.trim()) chunks.push(content.text);
+  if (typeof content.content === 'string' && content.content.trim()) chunks.push(content.content);
+  if (typeof content.result === 'string' && content.result.trim()) chunks.push(content.result);
+  if (typeof content.summary === 'string' && content.summary.trim()) chunks.push(content.summary);
+  if (typeof content.title === 'string' && content.title.trim()) chunks.push(content.title);
+  if (typeof content.name === 'string' && content.name.trim()) chunks.push(content.name);
+
+  return chunks.join('\n');
 }
 
 function post(type, data) {

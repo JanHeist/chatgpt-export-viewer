@@ -21,6 +21,10 @@
     dateTo: null,
     sortOrder: 'newest',
     starredOnly: false,
+    contentSearchEnabled: false,
+    contentSearchIds: null,
+    contentSearchQuery: '',
+    contentSearchToken: 0,
 
     stars: new Set(),
     models: [],
@@ -38,6 +42,7 @@
   var $app         = document.getElementById('app');
   var $headerStats = document.getElementById('header-stats');
   var $search      = document.getElementById('search-input');
+  var $contentSearchToggle = document.getElementById('content-search-toggle');
   var $modelFilter = document.getElementById('model-filter');
   var $categoryFilter = document.getElementById('category-filter');
   var $dateFrom    = document.getElementById('date-from');
@@ -96,6 +101,12 @@
           convCallbacks[d.id](d.conversation);
           delete convCallbacks[d.id];
         }
+        break;
+      case 'searchResults':
+        if (d.token !== State.contentSearchToken) break;
+        if (d.query !== State.contentSearchQuery) break;
+        State.contentSearchIds = new Set(d.ids || []);
+        applyFilters();
         break;
       case 'error':
         $loadStatus.style.display = 'none';
@@ -191,7 +202,15 @@
     var q = State.searchQuery.toLowerCase();
 
     State.filtered = arr.filter(function (c) {
-      if (q && c.title.toLowerCase().indexOf(q) === -1) return false;
+      if (q) {
+        var title = (c.title || '').toLowerCase();
+        var titleMatch = title.indexOf(q) !== -1;
+        var contentMatch = false;
+        if (State.contentSearchEnabled && State.contentSearchIds) {
+          contentMatch = State.contentSearchIds.has(c.id);
+        }
+        if (!titleMatch && !contentMatch) return false;
+      }
       if (State.modelFilter !== 'all' && c.model !== State.modelFilter) return false;
       if (State.categoryFilter !== 'all') {
         var gizmos = c.gizmos || [];
@@ -310,8 +329,7 @@
     $search.addEventListener('input', function () {
       clearTimeout(searchTimer);
       searchTimer = setTimeout(function () {
-        State.searchQuery = $search.value;
-        applyFilters();
+        onSearchQueryChange($search.value);
       }, SEARCH_DEBOUNCE);
     });
 
@@ -325,6 +343,19 @@
     $categoryFilter.addEventListener('change', function () {
       State.categoryFilter = $categoryFilter.value;
       applyFilters();
+    });
+
+    // Content search toggle
+    $contentSearchToggle.addEventListener('change', function () {
+      State.contentSearchEnabled = $contentSearchToggle.checked;
+      if (State.contentSearchEnabled && State.searchQuery.trim()) {
+        State.contentSearchIds = null;
+        applyFilters();
+        requestContentSearch(State.searchQuery);
+      } else {
+        State.contentSearchIds = null;
+        applyFilters();
+      }
     });
 
     // Date filters
@@ -1342,6 +1373,30 @@
   }
 
   // ── Utility Functions ──────────────────────────────────────
+  function onSearchQueryChange(value) {
+    State.searchQuery = value || '';
+    if (State.contentSearchEnabled && State.searchQuery.trim()) {
+      State.contentSearchIds = null;
+      applyFilters();
+      requestContentSearch(State.searchQuery);
+      return;
+    }
+    State.contentSearchIds = null;
+    applyFilters();
+  }
+
+  function requestContentSearch(query) {
+    var q = (query || '').trim();
+    State.contentSearchQuery = q;
+    if (!q) {
+      State.contentSearchIds = null;
+      applyFilters();
+      return;
+    }
+    State.contentSearchToken += 1;
+    worker.postMessage({ type: 'searchConversations', query: q, token: State.contentSearchToken });
+  }
+
   function extractGizmoEntries(conv, msgs) {
     var map = {};
 

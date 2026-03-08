@@ -48,6 +48,10 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar__search">
         <input type="search" id="search-input" placeholder="Search conversations&hellip;  /" autocomplete="off" spellcheck="false">
+        <label class="search-toggle" title="Search inside chat contents">
+          <input type="checkbox" id="content-search-toggle">
+          <span>In chats</span>
+        </label>
       </div>
       <div class="sidebar__filters">
         <select id="model-filter" aria-label="Filter by model">
@@ -56,11 +60,14 @@
         <select id="category-filter" aria-label="Filter by category">
           <option value="all">All categories</option>
         </select>
-        <div class="filter-break" aria-hidden="true"></div>
-        <input type="date" id="date-from" aria-label="From date" title="From date">
-        <input type="date" id="date-to" aria-label="To date" title="To date">
-        <button class="sort-btn" id="sort-btn" aria-label="Toggle sort order" title="Sort order">Newest</button>
-        <button class="filter-btn" id="star-filter" aria-label="Show starred only" title="Starred only">&#9733;</button>
+        <div class="filter-row filter-row--dates">
+          <input type="date" id="date-from" aria-label="From date" title="From date">
+          <input type="date" id="date-to" aria-label="To date" title="To date">
+        </div>
+        <div class="filter-row filter-row--actions">
+          <button class="sort-btn" id="sort-btn" aria-label="Toggle sort order" title="Sort order">Newest</button>
+          <button class="filter-btn" id="star-filter" aria-label="Show starred only" title="Starred only">&#9733;</button>
+        </div>
       </div>
       <div class="sidebar__list" id="conv-list" role="listbox" aria-label="Conversations">
         <div class="sidebar__list-spacer" id="conv-list-spacer"></div>
