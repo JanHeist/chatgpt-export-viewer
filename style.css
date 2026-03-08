@@ -36,9 +36,9 @@
   --rose-bg:        #e8707a20;
 
   /* Typography */
-  --font-display:   'Instrument Serif', 'Georgia', serif;
-  --font-body:      'DM Sans', 'Helvetica Neue', sans-serif;
-  --font-mono:      'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --font-display:   'Red Hat Text', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-body:      'Red Hat Text', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono:      ui-monospace, 'SFMono-Regular', 'Cascadia Mono', 'Consolas', 'Liberation Mono', monospace;
 
   --text-xs:   0.6875rem;
   --text-sm:   0.8125rem;
