@@ -47,6 +47,7 @@
   var $convHeader  = document.getElementById('conv-header');
   var $convTitle   = document.getElementById('conv-title');
   var $convModel   = document.getElementById('conv-model');
+  var $convGizmo   = document.getElementById('conv-gizmo');
   var $convDate    = document.getElementById('conv-date');
   var $convStats   = document.getElementById('conv-stats');
   var $starBtn     = document.getElementById('star-btn');
@@ -405,6 +406,7 @@
       var model = conv.default_model_slug || 'unknown';
       $convModel.textContent = formatModel(model);
       $convModel.className = 'model-badge ' + modelBadgeClass(model);
+      renderGizmoBadges(extractGizmoEntries(conv, msgs));
       $convDate.textContent = conv.create_time ? formatFullDate(conv.create_time) : '';
       $convStats.textContent = msgs.length + ' messages';
 
@@ -425,6 +427,8 @@
     State.activeMessages = [];
     $convHeader.classList.remove('visible');
     $messages.innerHTML = '';
+    $convGizmo.innerHTML = '';
+    $convGizmo.style.display = 'none';
     $emptyState.style.display = '';
     renderVisibleItems();
   }
@@ -1141,6 +1145,68 @@
   }
 
   // ── Utility Functions ──────────────────────────────────────
+  function extractGizmoEntries(conv, msgs) {
+    var map = {};
+
+    function add(id, name) {
+      if (!id && !name) return;
+      var key = id || name;
+      if (!map[key]) {
+        map[key] = { id: id || null, name: name || null };
+        return;
+      }
+      if (!map[key].id && id) map[key].id = id;
+      if (!map[key].name && name) map[key].name = name;
+    }
+
+    function addFromMeta(meta) {
+      if (!meta) return;
+      var id = meta.gizmo_id || meta.gizmoId || (meta.gizmo && (meta.gizmo.id || meta.gizmo.gizmo_id));
+      var name = meta.gizmo_name || meta.gizmo_display_name || meta.gizmo_title ||
+        (meta.gizmo && (meta.gizmo.name || meta.gizmo.title || meta.gizmo.display_name));
+      add(id, name);
+    }
+
+    if (conv) {
+      add(conv.gizmo_id, conv.gizmo_name || conv.gizmo_display_name || conv.gizmo_title);
+      if (conv.gizmo) {
+        add(conv.gizmo.id || conv.gizmo.gizmo_id, conv.gizmo.name || conv.gizmo.title || conv.gizmo.display_name);
+      }
+      if (conv.metadata) addFromMeta(conv.metadata);
+    }
+
+    if (msgs && msgs.length) {
+      for (var i = 0; i < msgs.length; i++) {
+        addFromMeta(msgs[i].metadata);
+      }
+    }
+
+    var entries = [];
+    for (var key in map) entries.push(map[key]);
+    return entries;
+  }
+
+  function renderGizmoBadges(entries) {
+    if (!entries || !entries.length) {
+      $convGizmo.innerHTML = '';
+      $convGizmo.style.display = 'none';
+      return;
+    }
+
+    var label = entries.length > 1 ? 'Categories' : 'Category';
+    var html = '<span class="gizmo-label">' + escapeHtml(label) + '</span>';
+
+    for (var i = 0; i < entries.length; i++) {
+      var entry = entries[i];
+      var text = entry.name || entry.id || 'Unknown';
+      var title = entry.id ? ' title="' + escapeAttr(entry.id) + '"' : '';
+      html += '<span class="gizmo-badge"' + title + '>' + escapeHtml(text) + '</span>';
+    }
+
+    $convGizmo.style.display = 'inline-flex';
+    $convGizmo.innerHTML = html;
+  }
+
   function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

@@ -444,6 +444,31 @@ input:focus, select:focus {
 .model-badge--auto,
 .model-badge--unknown { background: var(--ink-surface); color: var(--cream-dim); }
 
+.gizmo-group {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.gizmo-label {
+  font-size: var(--text-xs);
+  color: var(--cream-dim);
+}
+
+.gizmo-badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  padding: 3px 8px;
+  border-radius: var(--r-md);
+  background: var(--ink-surface);
+  border: 1px solid var(--ink-border);
+  color: var(--cream-muted);
+  letter-spacing: 0.01em;
+}
+
 
 /* --- Content Area --- */
 .content {
