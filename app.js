@@ -219,9 +219,6 @@
       el.dataset.id = c.id;
       el.setAttribute('role', 'option');
       el.setAttribute('aria-selected', c.id === State.activeId ? 'true' : 'false');
-      // Stagger animation
-      el.style.animationDelay = Math.min((i - startIdx) * 15, 300) + 'ms';
-
       var starred = State.stars.has(c.id);
 
       el.innerHTML =

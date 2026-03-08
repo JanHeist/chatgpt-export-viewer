@@ -128,7 +128,6 @@ input, select {
   border-radius: var(--r-md);
   padding: var(--sp-2) var(--sp-3);
   outline: none;
-  transition: border-color var(--t-fast);
 }
 input:focus, select:focus {
   border-color: var(--amber-dim);
@@ -146,7 +145,6 @@ input:focus, select:focus {
   justify-content: center;
   background: var(--ink-deepest);
   gap: var(--sp-5);
-  transition: opacity 0.5s ease;
 }
 .loading-screen.fade-out {
   opacity: 0;
@@ -182,7 +180,6 @@ input:focus, select:focus {
   background: var(--amber);
   border-radius: 1px;
   width: 0%;
-  transition: width 0.4s cubic-bezier(.16,1,.3,1);
   box-shadow: 0 0 12px var(--amber-glow);
 }
 
@@ -219,7 +216,6 @@ input:focus, select:focus {
   grid-template-rows: var(--header-h) 1fr;
   height: 100vh;
   opacity: 0;
-  transition: opacity 0.4s ease 0.2s;
 }
 .app.visible { opacity: 1; }
 
@@ -310,7 +306,6 @@ input:focus, select:focus {
   padding: var(--sp-1) var(--sp-2);
   border-radius: var(--r-sm);
   color: var(--cream-dim);
-  transition: color var(--t-fast), background var(--t-fast);
 }
 .filter-btn:hover { color: var(--amber); background: var(--amber-faint); }
 .filter-btn.active { color: var(--amber); background: var(--amber-faint); }
@@ -320,7 +315,6 @@ input:focus, select:focus {
   padding: var(--sp-1) var(--sp-2);
   border-radius: var(--r-sm);
   color: var(--cream-dim);
-  transition: color var(--t-fast);
 }
 .sort-btn:hover { color: var(--cream-primary); }
 
@@ -354,7 +348,6 @@ input:focus, select:focus {
   border-left: 3px solid transparent;
   border-bottom: 1px solid var(--ink-border-subtle);
   cursor: pointer;
-  transition: background var(--t-fast), border-color var(--t-fast);
   gap: var(--sp-1);
   overflow: hidden;
 }
@@ -392,7 +385,6 @@ input:focus, select:focus {
   color: var(--amber);
   flex-shrink: 0;
   opacity: 0;
-  transition: opacity var(--t-fast);
 }
 .conv-item__star.visible { opacity: 1; }
 .conv-item:hover .conv-item__star { opacity: 0.5; }
@@ -475,7 +467,6 @@ input:focus, select:focus {
   grid-column: 2;
   grid-row: 2;
   overflow-y: auto;
-  scroll-behavior: smooth;
   background: var(--ink-deep);
 }
 
@@ -555,7 +546,6 @@ input:focus, select:focus {
   padding: var(--sp-1) var(--sp-2);
   border-radius: var(--r-sm);
   color: var(--cream-dim);
-  transition: color var(--t-fast), background var(--t-fast);
 }
 .icon-btn:hover { color: var(--amber); background: var(--amber-faint); }
 .icon-btn.starred { color: var(--amber); }
@@ -571,7 +561,6 @@ input:focus, select:focus {
 .message {
   padding: var(--sp-5) 0;
   border-bottom: 1px solid var(--ink-border-subtle);
-  animation: msgFadeIn 0.3s ease both;
 }
 
 .message + .message { /* tighten consecutive */ }
@@ -617,10 +606,6 @@ input:focus, select:focus {
   color: var(--cream-faint);
 }
 
-@keyframes msgFadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
 
 
 /* --- Markdown Content --- */
@@ -723,7 +708,6 @@ input:focus, select:focus {
   color: var(--cream-dim);
   background: transparent;
   border: 1px solid transparent;
-  transition: all var(--t-fast);
   opacity: 0;
 }
 .code-block-wrapper:hover .copy-btn { opacity: 1; }
@@ -770,7 +754,6 @@ input:focus, select:focus {
   align-items: center;
   gap: var(--sp-2);
   list-style: none;
-  transition: background var(--t-fast);
 }
 .collapsible-block summary:hover { background: var(--ink-tertiary); }
 
@@ -778,7 +761,6 @@ input:focus, select:focus {
 
 .collapsible-block summary .chevron {
   font-size: 0.5em;
-  transition: transform var(--t-fast);
   color: var(--cream-faint);
 }
 .collapsible-block[open] summary .chevron { transform: rotate(90deg); }
@@ -857,7 +839,6 @@ input:focus, select:focus {
   background: var(--ink-secondary);
   border: 1px solid var(--ink-border);
   border-radius: var(--r-md);
-  transition: background var(--t-fast), border-color var(--t-fast);
   text-decoration: none;
 }
 .link-card:hover {
@@ -890,7 +871,6 @@ input:focus, select:focus {
   max-height: 400px;
   object-fit: contain;
   cursor: zoom-in;
-  transition: opacity var(--t-fast);
   box-shadow: var(--shadow-sm);
 }
 .message-image:hover { opacity: 0.9; }
@@ -922,7 +902,6 @@ input:focus, select:focus {
   align-items: center;
   justify-content: center;
   cursor: zoom-out;
-  animation: modalIn 0.2s ease;
 }
 
 .image-modal img {
@@ -933,10 +912,6 @@ input:focus, select:focus {
   box-shadow: var(--shadow-lg);
 }
 
-@keyframes modalIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
 
 
 /* --- Empty Sidebar State --- */
@@ -951,13 +926,6 @@ input:focus, select:focus {
   padding: var(--sp-5);
 }
 
-
-/* --- Stagger animation for sidebar items --- */
-.conv-item { animation: listSlideIn 0.25s ease both; }
-@keyframes listSlideIn {
-  from { opacity: 0; transform: translateX(-8px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
 
 
 /* --- Responsive --- */
@@ -978,7 +946,6 @@ input:focus, select:focus {
     width: 300px;
     z-index: 100;
     transform: translateX(-100%);
-    transition: transform var(--t-slow);
     box-shadow: var(--shadow-lg);
     background: var(--ink-primary);
   }
@@ -997,11 +964,4 @@ input:focus, select:focus {
   .content { grid-column: 1; }
 
   .menu-toggle { display: block; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
 }
