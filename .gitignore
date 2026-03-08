@@ -1,25 +1,2 @@
-# ChatGPT data export files (present in parent directory)
-conversations.json
-group_chats.json
-shared_conversations.json
-message_feedback.json
-user.json
-basispoints.json
-shopping.json
-sora.json
-chat.html
-
-# Media from exports
-*.wav
-*.dat
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Editor files
-*.swp
-*.swo
-*~
 .vscode/
 .idea/
