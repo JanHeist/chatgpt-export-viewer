@@ -5,35 +5,38 @@
 /* --- Design Tokens --- */
 :root {
   /* Ink & Parchment palette */
-  --ink-deepest:    #06070a;
-  --ink-deep:       #08090a;
-  --ink-primary:    #0f1114;
-  --ink-secondary:  #14171c;
-  --ink-tertiary:   #1a1e25;
-  --ink-surface:    #21262e;
-  --ink-hover:      #282e38;
-  --ink-border:     #2a3040;
-  --ink-border-subtle: #1e2330;
+  --ink-deepest:    #0a0b0f;
+  --ink-deep:       #0d1117;
+  --ink-primary:    #111721;
+  --ink-secondary:  #151c28;
+  --ink-tertiary:   #1b2432;
+  --ink-surface:    #222c3d;
+  --ink-hover:      #2a364a;
+  --ink-border:     #2f3b52;
+  --ink-border-subtle: #1a2230;
 
-  --cream-primary:  #f0e6d3;
-  --cream-muted:    #c4b8a4;
-  --cream-dim:      #8a8070;
-  --cream-faint:    #5a554c;
+  --cream-primary:  #e6edf3;
+  --cream-muted:    #c5cedc;
+  --cream-dim:      #97a3b8;
+  --cream-faint:    #6f7b90;
 
-  --amber:          #e8a849;
-  --amber-glow:     #e8a84933;
-  --amber-dim:      #b8862e;
-  --amber-faint:    #e8a84918;
+  --amber:          #f2c94c;
+  --amber-glow:     #f2c94c33;
+  --amber-dim:      #d4ad3b;
+  --amber-faint:    #f2c94c1a;
+
+  --danger:         #ef5b5b;
+  --danger-bg:      #ef5b5b26;
 
   /* Accent colors for model badges */
-  --blue:           #5b9bf5;
-  --blue-bg:        #5b9bf520;
-  --purple:         #b48efa;
-  --purple-bg:      #b48efa20;
-  --green:          #5dc977;
-  --green-bg:       #5dc97720;
-  --rose:           #e8707a;
-  --rose-bg:        #e8707a20;
+  --blue:           #f2c94c;
+  --blue-bg:        #f2c94c26;
+  --purple:         #f2c94c;
+  --purple-bg:      #f2c94c26;
+  --green:          #f2c94c;
+  --green-bg:       #f2c94c26;
+  --rose:           #f2c94c;
+  --rose-bg:        #f2c94c26;
 
   /* Typography */
   --font-display:   'Red Hat Text', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
@@ -67,9 +70,9 @@
   --t-slow: 400ms cubic-bezier(.16,1,.3,1);
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0,0,0,.4);
-  --shadow-md: 0 4px 16px rgba(0,0,0,.5);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,.6);
+  --shadow-sm: 0 1px 3px rgba(2,6,23,.35);
+  --shadow-md: 0 6px 20px rgba(2,6,23,.45);
+  --shadow-lg: 0 16px 48px rgba(2,6,23,.55);
   --shadow-glow: 0 0 20px var(--amber-glow);
 }
 
@@ -783,10 +786,11 @@ input:focus, select:focus {
 
 /* Thinking/reasoning blocks — parchment feel */
 .collapsible-block--thoughts summary {
-  background: #1a1812;
+  background: var(--ink-tertiary);
+  border-left: 2px solid var(--amber-dim);
 }
 .collapsible-block--thoughts .collapsible-block__content {
-  background: #13120e;
+  background: var(--ink-secondary);
   font-style: italic;
   color: var(--cream-dim);
 }
@@ -825,12 +829,12 @@ input:focus, select:focus {
 /* --- System Error --- */
 .system-error {
   padding: var(--sp-3) var(--sp-4);
-  background: #1f1214;
-  border: 1px solid #3d2022;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger);
   border-radius: var(--r-md);
   margin: var(--sp-2) 0;
   font-size: var(--text-sm);
-  color: var(--rose);
+  color: var(--danger);
 }
 
 
