@@ -24,6 +24,8 @@
     stars: new Set(),
     models: [],
     fileCache: {},
+    manifestMap: null,
+    manifestPromise: null,
   };
 
   // ── DOM refs ───────────────────────────────────────────────
@@ -140,6 +142,9 @@
       void $app.offsetHeight;
       $app.classList.add('visible');
     }, 500);
+
+    // Load export manifest (for image filename mapping)
+    ensureManifestLoaded();
 
     applyFilters();
     initEvents();
@@ -771,7 +776,7 @@
       img.style.maxWidth = Math.min(assetPart.width, 600) + 'px';
     }
 
-    resolveImageSrc(fileId, img);
+    resolveImageSrc(fileId, img, assetPart);
     img.addEventListener('click', function () { openImageModal(img.src); });
 
     return img;
@@ -784,7 +789,7 @@
       if (stripped.indexOf('#') !== -1) {
         var segments = stripped.split('#');
         for (var i = 0; i < segments.length; i++) {
-          if (segments[i].startsWith('file_')) return segments[i];
+          if (segments[i].startsWith('file_') || segments[i].startsWith('file-')) return segments[i];
         }
         return null;
       }
@@ -796,7 +801,7 @@
     return null;
   }
 
-  function resolveImageSrc(fileId, img) {
+  function resolveImageSrc(fileId, img, assetPart) {
     if (State.fileCache[fileId] === false) {
       // Known missing — show placeholder immediately
       showImagePlaceholder(img);
@@ -807,28 +812,46 @@
       return;
     }
 
-    // Only try the most common export formats to minimize 404 noise
-    var exts = ['-sanitized.jpeg', '-sanitized.png', '-sanitized.jpg'];
-    tryExtension(fileId, exts, 0, img);
+    ensureManifestLoaded().then(function () {
+      if (State.fileCache[fileId]) {
+        img.src = State.fileCache[fileId];
+        return;
+      }
+
+      var manifestPath = lookupManifestPath(fileId);
+      if (manifestPath) {
+        setImageSrc(fileId, manifestPath, img);
+        return;
+      }
+
+      var stems = buildCandidateStems(fileId, assetPart);
+      // Only try the most common export formats to minimize 404 noise
+      var exts = ['.png', '.jpg', '.jpeg', '.webp', '-sanitized.jpeg', '-sanitized.png', '-sanitized.jpg'];
+      tryCandidateStems(fileId, stems, exts, 0, 0, img);
+    });
   }
 
-  function tryExtension(fileId, exts, idx, img) {
-    if (idx >= exts.length) {
+  function tryCandidateStems(fileId, stems, exts, stemIdx, extIdx, img) {
+    if (stemIdx >= stems.length) {
       State.fileCache[fileId] = false; // Cache negative result
       showImagePlaceholder(img);
       return;
     }
 
-    var path = '../' + fileId + exts[idx];
+    if (extIdx >= exts.length) {
+      tryCandidateStems(fileId, stems, exts, stemIdx + 1, 0, img);
+      return;
+    }
+
+    var path = buildDataPath(stems[stemIdx] + exts[extIdx]);
     fetch(path, { method: 'HEAD' }).then(function (resp) {
       if (resp.ok) {
-        State.fileCache[fileId] = path;
-        img.src = path;
+        setImageSrc(fileId, path, img);
       } else {
-        tryExtension(fileId, exts, idx + 1, img);
+        tryCandidateStems(fileId, stems, exts, stemIdx, extIdx + 1, img);
       }
     }).catch(function () {
-      tryExtension(fileId, exts, idx + 1, img);
+      tryCandidateStems(fileId, stems, exts, stemIdx, extIdx + 1, img);
     });
   }
 
@@ -837,6 +860,129 @@
     placeholder.className = 'message-image--missing';
     placeholder.textContent = 'Image not in export';
     if (img.parentNode) img.parentNode.replaceChild(placeholder, img);
+  }
+
+  function ensureManifestLoaded() {
+    if (State.manifestPromise) return State.manifestPromise;
+
+    State.manifestPromise = fetch('../export_manifest.json').then(function (resp) {
+      if (!resp.ok) throw new Error('No manifest');
+      return resp.json();
+    }).then(function (manifest) {
+      State.manifestMap = buildManifestMap(manifest);
+      return State.manifestMap;
+    }).catch(function () {
+      State.manifestMap = {};
+      return State.manifestMap;
+    });
+
+    return State.manifestPromise;
+  }
+
+  function buildManifestMap(manifest) {
+    var map = {};
+    var files = manifest && manifest.export_files;
+    if (!files || !files.length) return map;
+
+    for (var i = 0; i < files.length; i++) {
+      var path = files[i].path;
+      if (!path || typeof path !== 'string') continue;
+
+      var parts = path.split('/');
+      var filename = parts[parts.length - 1];
+      if (!filename) continue;
+      if (filename.indexOf('file_') !== 0 && filename.indexOf('file-') !== 0) continue;
+
+      var noExt = stripExtension(filename);
+      addManifestEntry(map, noExt, path);
+
+      var baseId = extractBaseFileIdFromName(filename);
+      if (baseId) addManifestEntry(map, baseId, path);
+    }
+
+    return map;
+  }
+
+  function addManifestEntry(map, key, path) {
+    if (!key) return;
+    if (!map[key]) map[key] = path;
+  }
+
+  function lookupManifestPath(fileId) {
+    if (!State.manifestMap) return null;
+    if (State.manifestMap[fileId]) return State.manifestMap[fileId];
+
+    var baseId = extractBaseFileIdFromName(fileId);
+    if (baseId && State.manifestMap[baseId]) return State.manifestMap[baseId];
+
+    return null;
+  }
+
+  function buildCandidateStems(fileId, assetPart) {
+    var stems = [fileId];
+    if (!assetPart) return uniqueList(stems);
+
+    if (isBareFileId(fileId)) {
+      var w = assetPart.width || 0;
+      var h = assetPart.height || 0;
+      var max = (w && h) ? Math.max(w, h) : 0;
+
+      if (max) stems.push(fileId + '-' + max);
+      if (w) stems.push(fileId + '-' + w);
+      if (h) stems.push(fileId + '-' + h);
+    }
+
+    return uniqueList(stems);
+  }
+
+  function isBareFileId(fileId) {
+    if (!fileId) return false;
+    if (/^file_[0-9a-f]+$/i.test(fileId)) return true;
+    if (/^file-[A-Za-z0-9]+$/.test(fileId)) return true;
+    return false;
+  }
+
+  function extractBaseFileIdFromName(name) {
+    if (!name) return null;
+    var match = name.match(/^(file[_-][A-Za-z0-9]+)/);
+    return match ? match[1] : null;
+  }
+
+  function stripExtension(name) {
+    return name.replace(/\.[^/.]+$/, '');
+  }
+
+  function uniqueList(arr) {
+    var seen = {};
+    var out = [];
+    for (var i = 0; i < arr.length; i++) {
+      var val = arr[i];
+      if (!val || seen[val]) continue;
+      seen[val] = true;
+      out.push(val);
+    }
+    return out;
+  }
+
+  function buildDataPath(path) {
+    if (!path) return path;
+    if (
+      path.indexOf('../') === 0 ||
+      path.indexOf('./') === 0 ||
+      path.indexOf('http://') === 0 ||
+      path.indexOf('https://') === 0 ||
+      path.indexOf('data:') === 0 ||
+      path.indexOf('blob:') === 0
+    ) {
+      return encodeURI(path);
+    }
+    return encodeURI('../' + path);
+  }
+
+  function setImageSrc(fileId, path, img) {
+    var fullPath = buildDataPath(path);
+    State.fileCache[fileId] = fullPath;
+    img.src = fullPath;
   }
 
   // ── Browsing Display ───────────────────────────────────────
