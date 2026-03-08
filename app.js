@@ -16,6 +16,7 @@
 
     searchQuery: '',
     modelFilter: 'all',
+    categoryFilter: 'all',
     dateFrom: null,
     dateTo: null,
     sortOrder: 'newest',
@@ -23,6 +24,7 @@
 
     stars: new Set(),
     models: [],
+    categories: [],
     fileCache: {},
     manifestMap: null,
     manifestPromise: null,
@@ -37,6 +39,7 @@
   var $headerStats = document.getElementById('header-stats');
   var $search      = document.getElementById('search-input');
   var $modelFilter = document.getElementById('model-filter');
+  var $categoryFilter = document.getElementById('category-filter');
   var $dateFrom    = document.getElementById('date-from');
   var $dateTo      = document.getElementById('date-to');
   var $sortBtn     = document.getElementById('sort-btn');
@@ -125,12 +128,44 @@
       return modelSet[b] - modelSet[a];
     });
 
+    // Collect categories (gizmos)
+    var categoryMap = {};
+    for (var j = 0; j < index.length; j++) {
+      var gizmos = index[j].gizmos || [];
+      for (var k = 0; k < gizmos.length; k++) {
+        var g = gizmos[k];
+        var key = g.key || g.id || g.name;
+        if (!key) continue;
+        if (!categoryMap[key]) {
+          categoryMap[key] = { key: key, id: g.id || null, name: g.name || null, count: 0 };
+        }
+        categoryMap[key].count += 1;
+        if (!categoryMap[key].id && g.id) categoryMap[key].id = g.id;
+        if (!categoryMap[key].name && g.name) categoryMap[key].name = g.name;
+      }
+    }
+    State.categories = Object.keys(categoryMap).map(function (key) {
+      return categoryMap[key];
+    }).sort(function (a, b) {
+      if (b.count !== a.count) return b.count - a.count;
+      return formatCategoryLabel(a).localeCompare(formatCategoryLabel(b));
+    });
+
     // Populate model filter
     State.models.forEach(function (m) {
       var opt = document.createElement('option');
       opt.value = m;
       opt.textContent = formatModel(m) + ' (' + modelSet[m] + ')';
       $modelFilter.appendChild(opt);
+    });
+
+    // Populate category filter
+    State.categories.forEach(function (c) {
+      var optCat = document.createElement('option');
+      optCat.value = c.key;
+      optCat.textContent = formatCategoryLabel(c) + ' (' + c.count + ')';
+      if (c.id && c.id !== c.name) optCat.title = c.id;
+      $categoryFilter.appendChild(optCat);
     });
 
     // Show app
@@ -158,6 +193,19 @@
     State.filtered = arr.filter(function (c) {
       if (q && c.title.toLowerCase().indexOf(q) === -1) return false;
       if (State.modelFilter !== 'all' && c.model !== State.modelFilter) return false;
+      if (State.categoryFilter !== 'all') {
+        var gizmos = c.gizmos || [];
+        var matched = false;
+        for (var gi = 0; gi < gizmos.length; gi++) {
+          var g = gizmos[gi];
+          var key = g.key || g.id || g.name;
+          if (key === State.categoryFilter) {
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) return false;
+      }
       if (State.dateFrom) {
         var from = State.dateFrom.getTime() / 1000;
         if ((c.createTime || 0) < from) return false;
@@ -270,6 +318,12 @@
     // Model filter
     $modelFilter.addEventListener('change', function () {
       State.modelFilter = $modelFilter.value;
+      applyFilters();
+    });
+
+    // Category filter
+    $categoryFilter.addEventListener('change', function () {
+      State.categoryFilter = $categoryFilter.value;
       applyFilters();
     });
 
@@ -1391,6 +1445,20 @@
       .replace(/Gpt /i, 'GPT-')
       .replace(/^O(\d)/, 'o$1')
       .replace(/Mini/g, 'mini');
+  }
+
+  function formatCategoryLabel(cat) {
+    if (!cat) return 'Unknown';
+    if (cat.name && cat.id) return cat.name + ' (' + shortGizmoId(cat.id) + ')';
+    if (cat.name) return cat.name;
+    if (cat.id) return cat.id;
+    return cat.key || 'Unknown';
+  }
+
+  function shortGizmoId(id) {
+    if (!id) return '';
+    if (id.length <= 18) return id;
+    return id.substring(0, 10) + '...' + id.substring(id.length - 6);
   }
 
   function modelBadgeClass(slug) {

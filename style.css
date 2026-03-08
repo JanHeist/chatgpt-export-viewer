@@ -289,6 +289,10 @@ input:focus, select:focus {
   border-bottom: 1px solid var(--ink-border-subtle);
   align-items: center;
 }
+.filter-break {
+  flex-basis: 100%;
+  height: 0;
+}
 .sidebar__filters select {
   font-size: var(--text-xs);
   padding: var(--sp-1) var(--sp-2);
@@ -387,7 +391,6 @@ input:focus, select:focus {
   opacity: 0;
 }
 .conv-item__star.visible { opacity: 1; }
-.conv-item:hover .conv-item__star { opacity: 0.5; }
 .conv-item__star.visible { opacity: 1; }
 
 .conv-item__meta {

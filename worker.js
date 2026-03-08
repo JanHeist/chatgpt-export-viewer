@@ -34,10 +34,14 @@ async function loadData() {
       const id = conv.conversation_id || conv.id;
       conversationMap[id] = conv;
 
+      const gizmoCollector = createGizmoCollector();
+      gizmoCollector.addFromConversation(conv);
+
       let msgCount = 0;
       const mapping = conv.mapping || {};
       for (const nodeId in mapping) {
         const msg = mapping[nodeId].message;
+        if (msg && msg.metadata) gizmoCollector.addFromMeta(msg.metadata);
         if (msg && msg.author && msg.author.role !== 'system') {
           if (!msg.metadata || !msg.metadata.is_visually_hidden_from_conversation) {
             msgCount++;
@@ -53,6 +57,7 @@ async function loadData() {
         model: conv.default_model_slug || null,
         msgCount: msgCount,
         isStarred: conv.is_starred || false,
+        gizmos: gizmoCollector.entries(),
       });
     }
 
@@ -65,6 +70,50 @@ async function loadData() {
   } catch (err) {
     post('error', { message: err.message || String(err) });
   }
+}
+
+function createGizmoCollector() {
+  const map = {};
+
+  function add(id, name) {
+    if (!id && !name) return;
+    const key = id || name;
+    if (!map[key]) {
+      map[key] = { id: id || null, name: name || null, key: key };
+      return;
+    }
+    if (!map[key].id && id) map[key].id = id;
+    if (!map[key].name && name) map[key].name = name;
+  }
+
+  function addFromMeta(meta) {
+    if (!meta) return;
+    const id = meta.gizmo_id || meta.gizmoId || (meta.gizmo && (meta.gizmo.id || meta.gizmo.gizmo_id));
+    const name = meta.gizmo_name || meta.gizmo_display_name || meta.gizmo_title ||
+      (meta.gizmo && (meta.gizmo.name || meta.gizmo.title || meta.gizmo.display_name));
+    add(id, name);
+  }
+
+  function addFromConversation(conv) {
+    if (!conv) return;
+    add(conv.gizmo_id, conv.gizmo_name || conv.gizmo_display_name || conv.gizmo_title);
+    if (conv.gizmo) {
+      add(conv.gizmo.id || conv.gizmo.gizmo_id, conv.gizmo.name || conv.gizmo.title || conv.gizmo.display_name);
+    }
+    if (conv.metadata) addFromMeta(conv.metadata);
+  }
+
+  function entries() {
+    const list = [];
+    for (const key in map) list.push(map[key]);
+    return list;
+  }
+
+  return {
+    addFromMeta: addFromMeta,
+    addFromConversation: addFromConversation,
+    entries: entries,
+  };
 }
 
 async function fetchConversationParts() {
