@@ -48,6 +48,16 @@ http://localhost:8000/chatgpt-export-viewer/
 
 > Browsers block `fetch()` from `file://` URLs. A local server avoids that and is required for large exports.
 
+### Linux Quickstart (one command)
+
+```bash
+cd /path/to/your-chatgpt-export/chatgpt-export-viewer
+chmod +x run-linux.sh
+./run-linux.sh
+```
+
+This script jumps to the export root, starts `python3 -m http.server`, and opens the viewer in your browser. It prints the URL and keeps the server running until you press Ctrl+C.
+
 ---
 
 ## Features

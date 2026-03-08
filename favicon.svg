@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="ChatGPT Export Viewer">
+  <rect x="4" y="4" width="56" height="56" rx="12" fill="#0d1117" stroke="#2f3b52" stroke-width="2"/>
+  <circle cx="32" cy="32" r="16" fill="none" stroke="#f2c94c" stroke-width="6"/>
+  <circle cx="32" cy="32" r="6" fill="#f2c94c"/>
+</svg>
