@@ -1,6 +1,6 @@
 /* ============================================================
    ChatGPT Export Viewer — Web Worker
-   Handles parsing of the large conversations.json off the main thread
+   Handles parsing of the large conversations-xxx.json parts off the main thread
    ============================================================ */
 
 let conversations = null;
@@ -22,21 +22,7 @@ async function loadData() {
   post('loadProgress', { phase: 'Fetching archive\u2026', pct: 5 });
 
   try {
-    const response = await fetch('../conversations.json');
-
-    if (!response.ok) {
-      throw new Error(
-        response.status === 0
-          ? 'Cannot load conversations.json. If you opened this via file://, you need a local server. Run: python3 -m http.server 8000'
-          : `HTTP ${response.status}: ${response.statusText}`
-      );
-    }
-
-    post('loadProgress', { phase: 'Reading data\u2026', pct: 20 });
-    const text = await response.text();
-
-    post('loadProgress', { phase: 'Parsing JSON\u2026', pct: 45 });
-    conversations = JSON.parse(text);
+    conversations = await fetchConversationParts();
 
     post('loadProgress', { phase: 'Building index\u2026', pct: 80 });
 
@@ -79,6 +65,55 @@ async function loadData() {
   } catch (err) {
     post('error', { message: err.message || String(err) });
   }
+}
+
+async function fetchConversationParts() {
+  const allConversations = [];
+  let part = 0;
+  let foundAny = false;
+
+  while (true) {
+    const suffix = String(part).padStart(3, '0');
+    const filename = `../conversations-${suffix}.json`;
+    const pct = Math.min(5 + part * 4, 45);
+
+    post('loadProgress', { phase: `Fetching conversations-${suffix}.json\u2026`, pct: pct });
+
+    const response = await fetch(filename);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        if (!foundAny) {
+          throw new Error(
+            'Cannot find conversations-000.json. Expected files named conversations-000.json, conversations-001.json, etc. If you opened this via file://, you need a local server. Run: python3 -m http.server 8000'
+          );
+        }
+        break;
+      }
+
+      throw new Error(
+        response.status === 0
+          ? 'Cannot load conversation parts. If you opened this via file://, you need a local server. Run: python3 -m http.server 8000'
+          : `HTTP ${response.status}: ${response.statusText}`
+      );
+    }
+
+    foundAny = true;
+
+    post('loadProgress', { phase: `Reading conversations-${suffix}.json\u2026`, pct: Math.min(pct + 3, 48) });
+    const text = await response.text();
+
+    post('loadProgress', { phase: `Parsing conversations-${suffix}.json\u2026`, pct: Math.min(pct + 6, 50) });
+    const parsed = JSON.parse(text);
+    if (!Array.isArray(parsed)) {
+      throw new Error(`Expected an array in conversations-${suffix}.json`);
+    }
+
+    allConversations.push.apply(allConversations, parsed);
+    part++;
+  }
+
+  return allConversations;
 }
 
 function getConversation(id) {
